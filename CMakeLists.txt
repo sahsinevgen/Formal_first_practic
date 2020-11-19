@@ -19,3 +19,6 @@ add_subdirectory(libs)
 add_executable(main ./main.cpp)
 target_link_libraries(main libs)
 
+add_executable(tests ./tests.cpp)
+target_link_libraries(tests libs ${GTEST_LIBRARIES} Threads::Threads)
+
