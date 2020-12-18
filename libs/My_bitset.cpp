@@ -14,12 +14,12 @@ my_bitset::my_bitset(int n_) {
     }
 }
 
-my_bitset::my_bitset(const my_bitset &a) {
-    n = a.n;
-    ar_sz = a.ar_sz;
+my_bitset::my_bitset(const my_bitset &other) {
+    n = other.n;
+    ar_sz = other.ar_sz;
     ar = new unsigned int[ar_sz];
     for (int i = 0; i < ar_sz; i++) {
-        ar[i] = a.ar[i];
+        ar[i] = other.ar[i];
     }
 }
 
@@ -27,89 +27,89 @@ my_bitset::~my_bitset() {
     delete [] ar;
 }
 
-my_bitset& my_bitset::operator= (const my_bitset& a) {
-    n = a.n;
-    ar_sz = a.ar_sz;
+my_bitset& my_bitset::operator= (const my_bitset& other) {
+    n = other.n;
+    ar_sz = other.ar_sz;
     ar = new unsigned int[ar_sz];
     for (int i = 0; i < ar_sz; i++) {
-        ar[i] = a.ar[i];
+        ar[i] = other.ar[i];
     }
     return *this;
 }
 
-bool my_bitset::operator<(const my_bitset &a) const {
+bool my_bitset::operator<(const my_bitset &other) const {
     for (int i = 0; i < ar_sz; i++) {
-        if (ar[i] != a.ar[i]) {
-            return ar[i] < a.ar[i];
+        if (ar[i] != other.ar[i]) {
+            return ar[i] < other.ar[i];
         }
     }
     return false;
 }
 
-bool my_bitset::operator==(const my_bitset &a) const {
+bool my_bitset::operator==(const my_bitset &other) const {
     for (int i = 0; i < ar_sz; i++) {
-        if (ar[i] != a.ar[i]) {
+        if (ar[i] != other.ar[i]) {
             return false;
         }
     }
     return true;
 }
 
-my_bitset& my_bitset::operator|=(const my_bitset &a) {
+my_bitset& my_bitset::operator|=(const my_bitset &other) {
     for (int i = 0; i < ar_sz; i++) {
-        ar[i] |= a.ar[i];
+        ar[i] |= other.ar[i];
     }
     return (*this);
 }
 
-my_bitset my_bitset::operator|(const my_bitset &a) const {
+my_bitset my_bitset::operator|(const my_bitset &other) const {
     my_bitset ans(*this);
-    ans |= a;
+    ans |= other;
     return ans;
 }
 
-void my_bitset::set(int i, int x) {
-    int i1, i2;
-    parse(i, i1, i2);
-    if (x == 1) {
-        ar[i1] |= (1 << i2);
+void my_bitset::set(int number, int value) {
+    int block_number, i2;
+    parse(number, block_number, i2);
+    if (value == 1) {
+        ar[block_number] |= (1 << i2);
     } else {
-        ar[i1] |= (1 << i2);
-        ar[i1] ^= (1 << i2);
+        ar[block_number] |= (1 << i2);
+        ar[block_number] ^= (1 << i2);
     }
 }
 
-bool my_bitset::get(int i) const {
-    int i1, i2;
-    parse(i, i1, i2);
-    return (ar[i1] & (1 << i2));
+bool my_bitset::get(int number) const {
+    int block_number, bit_number;
+    parse(number, block_number, bit_number);
+    return (ar[block_number] & (1 << bit_number));
 }
 
-int my_bitset::next_true(int i) const {
-    int i1, i2;
-    parse(i, i1, i2);
-    i2++;
-    while (i2 != sz) {
-        if (get((i1 * sz) + i2))
-            return (i1 * sz) + i2;
-        i2++;
+int my_bitset::next_true(int number) const {
+    int block_number, bit_number;
+    parse(number, block_number, bit_number);
+    bit_number++;
+    while (bit_number != sz) {
+        if (get((block_number * sz) + bit_number))
+            return (block_number * sz) + bit_number;
+        bit_number++;
     }
-    i1++;
-    while (i1 < ar_sz && ar[i1] == 0) {
-        i1++;
+    block_number++;
+    while (block_number < ar_sz && ar[block_number] == 0) {
+        block_number++;
     }
-    if (i1 == ar_sz) {
+    if (block_number == ar_sz) {
         return -1;
     }
-    i2 = 0;
+    bit_number = 0;
     while (1) {
-        if (get((i1 * sz) + i2))
-            return (i1 * sz) + i2;
-        i2++;
+        if (get((block_number * sz) + bit_number))
+            return (block_number * sz) + bit_number;
+        bit_number++;
     }
 }
 
-void my_bitset::parse(int i, int &i1, int &i2) const {
-    i1 = i / sz;
-    i2 = i % sz;
+void my_bitset::parse(int number, int &block_number, int &bit_number) const {
+    block_number = number / sz;
+    bit_number = number % sz;
 }

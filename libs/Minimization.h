@@ -4,8 +4,8 @@
 #include"State_machine.h"
 #include<algorithm>
 
-bool cmp(edge a, edge b);
+bool cmp(edge first, edge second);
 
-state_machine minimization(state_machine g); //works only for full state machine
+state_machine minimization(state_machine machine); //works only for full state machine
 
 #endif //Minimization

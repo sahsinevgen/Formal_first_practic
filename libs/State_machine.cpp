@@ -5,10 +5,10 @@ edge::edge(int to_, std::string word_) {
     word = word_;
 }
 
-edge::edge(int to_, char c) {
+edge::edge(int to_, char letter) {
     to = to_;
     word = "";
-    word += c;
+    word += letter;
 }
 
 bool edge::operator < (edge other) {
@@ -47,8 +47,8 @@ void state_machine::add_edge(int from, int to, std::string word) {
     graph[from].emplace_back(to, word);
 }
 
-void state_machine::add_edge(int from, int to, char c) {
-    graph[from].emplace_back(to, c);
+void state_machine::add_edge(int from, int to, char letter) {
+    graph[from].emplace_back(to, letter);
 }
 
 void state_machine::add_edge(int from, edge x) {
@@ -61,45 +61,49 @@ void state_machine::add_vertex(int cnt) {
     terminals.resize(n, 0);
 }
 
-bool state_machine::has_word(std::string s) {
-    my_bitset now(n);
-    now.set(start, 1);
-    for (int i = 0; i < s.size(); i++) {
-        my_bitset next(s.size());
-        int cur_vertex = (now.get(0) ? 0 : now.next_true(0));
+bool state_machine::has_word(std::string word) {
+    my_bitset current_set(n);
+    current_set.set(start, 1);
+    for (int i = 0; i < word.size(); i++) {
+        my_bitset next_set(word.size());
+        int cur_vertex = (current_set.get(0) 
+                          ? 0 
+                          : current_set.next_true(0));
         while (cur_vertex != -1) {
             for (int j = 0; j < graph[cur_vertex].size(); j++) {
-                if (graph[cur_vertex][j].word[0] == s[i]) {
-                    next.set(graph[cur_vertex][j].to, 1);
+                if (graph[cur_vertex][j].word[0] == word[i]) {
+                    next_set.set(graph[cur_vertex][j].to, 1);
                 }
             }
-            cur_vertex = now.next_true(cur_vertex);
+            cur_vertex = current_set.next_true(cur_vertex);
         }
-        now = next;
+        current_set = next_set;
     }
-    int cur_vertex = (now.get(0) ? 0 : now.next_true(0));
+    int cur_vertex = (current_set.get(0) 
+                      ? 0 
+                      : current_set.next_true(0));
     while (cur_vertex != -1) {
         if (terminals[cur_vertex]) {
             return true;
         }
-        cur_vertex = now.next_true(cur_vertex);
+        cur_vertex = current_set.next_true(cur_vertex);
     }
     return false;
 }
 
-std::istream& operator>>(std::istream& in, state_machine& g) {
+std::istream& operator>>(std::istream& in, state_machine& machine) {
     int n;
-    g = state_machine();
-    in >> n >> g.start;
-    g.start--;
-    g.add_vertex(n);
+    machine = state_machine();
+    in >> n >> machine.start;
+    machine.start--;
+    machine.add_vertex(n);
     int cnt_terminals;
     in >> cnt_terminals;
     for (int i = 0; i < cnt_terminals; i++) {
         int u;
         in >> u;
         u--;
-        g.terminals[u] = 1;
+        machine.terminals[u] = 1;
     }
     int m;
     in >> m;
@@ -112,71 +116,90 @@ std::istream& operator>>(std::istream& in, state_machine& g) {
         if (word == "#") {
             word = "";
         }
-        g.add_edge(from, to, word);
+        machine.add_edge(from, to, word);
     }
     return in;
 }
 
-std::ostream& operator<<(std::ostream& out, const state_machine& g) {
-    
-    out << g.n << "\n" << g.start + 1 << "\n";
+std::ostream& operator<<(std::ostream& out, const state_machine& machine) {
+    out << machine.n << "\n" << machine.start + 1 << "\n";
     int cnt_terminals = 0;
-    for (int u = 0; u < g.n; u++) {
-        if (g.terminals[u]) {
+    for (int u = 0; u < machine.n; u++) {
+        if (machine.terminals[u]) {
             cnt_terminals++;
         }
     }
     out << cnt_terminals << "\n";
-    for (int u = 0; u < g.n; u++) {
-        if (g.terminals[u]) {
+    for (int u = 0; u < machine.n; u++) {
+        if (machine.terminals[u]) {
             out << u + 1 << " ";
         }
     }
     out << "\n";
     int m = 0;
-    for (int u = 0; u < g.n; u++) {
-        m += g.graph[u].size();
+    for (int u = 0; u < machine.n; u++) {
+        m += machine.graph[u].size();
     }
     out << m << "\n";
-    for (int from = 0; from < g.n; from++) {
-        for (int i = 0; i < g.graph[from].size(); i++) {
-            std::string move = g.graph[from][i].word;
+    for (int from = 0; from < machine.n; from++) {
+        for (int i = 0; i < machine.graph[from].size(); i++) {
+            std::string move = machine.graph[from][i].word;
             if (move == "") {
                 move = "#";
             }
-            out << from + 1 << " " << g.graph[from][i].to + 1 << " " << move << "\n";
+            out << from + 1 << " " << machine.graph[from][i].to + 1 
+                            << " " << move << "\n";
         }
     }
 
     return out;
 }
 
-void dfs_for_equiv(const state_machine &a, const state_machine &b, int* used, int state_in_a, int state_in_b, int len) {
-    for (int i = 0; i < a.graph[state_in_a].size(); i++) {
-        int new_state_in_a = a.graph[state_in_a][i].to;
-        int new_state_in_b = b.graph[state_in_b][i].to;
-        if (a.graph[state_in_a][i].word != b.graph[state_in_b][i].word || *(used + a.n * new_state_in_a + new_state_in_b)) {
+void dfs_for_equiv(const state_machine &first_machine, 
+                   const state_machine &second_machine, 
+                   int* used, 
+                   int first_state, 
+                   int second_state, 
+                   int len) {
+    for (int i = 0; i < first_machine.graph[first_state].size(); i++) {
+        int first_state = first_machine.graph[first_state][i].to;
+        int second_state = second_machine.graph[second_state][i].to;
+        if (first_machine.graph[first_state][i].word != 
+            second_machine.graph[second_state][i].word || 
+            *(used + first_machine.n * first_state + second_state)) {
             continue;
         }
-        *(used + b.n * new_state_in_a + new_state_in_b) = 1;
-        if (len + 1 < a.n + b.n) {
-            dfs_for_equiv(a, b, used, new_state_in_a, new_state_in_b, len + 1);
+        *(used + second_machine.n * first_state + second_state) = 1;
+        if (len + 1 < first_machine.n + second_machine.n) {
+            dfs_for_equiv(first_machine, 
+                          second_machine, 
+                          used, 
+                          first_state, 
+                          second_state, 
+                          len + 1);
         }
     }
 }
 
-bool are_equiv(state_machine a, state_machine b) {
-    int used[a.n][b.n];
-    for (int state_in_a = 0; state_in_a < a.n; state_in_a++) {
-        for (int state_in_b = 0; state_in_b < b.n; state_in_b++) {
-            used[state_in_a][state_in_b] = 0;
+bool are_equiv(state_machine first_machine, state_machine second_machine) {
+    int used[first_machine.n][second_machine.n];
+    for (int first_state = 0; first_state < first_machine.n; first_state++) {
+        for (int second_state = 0; second_state < second_machine.n; second_state++) {
+            used[first_state][second_state] = 0;
         }
     }
-    used[a.start][b.start];
-    dfs_for_equiv(a, b, (int*) used, a.start, b.start, 0);
-    for (int state_in_a = 0; state_in_a < a.n; state_in_a++) {
-        for (int state_in_b = 0; state_in_b < b.n; state_in_b++) {
-            if (used[state_in_a][state_in_b] && a.terminals[state_in_a] != b.terminals[state_in_b]) {
+    used[first_machine.start][second_machine.start];
+    dfs_for_equiv(first_machine, 
+                  second_machine, 
+                  (int*) used, 
+                  first_machine.start, 
+                  second_machine.start, 
+                  0);
+    for (int first_state = 0; first_state < first_machine.n; first_state++) {
+        for (int second_state = 0; second_state < second_machine.n; second_state++) {
+            if (used[first_state][second_state] && 
+                first_machine.terminals[first_state] != 
+                second_machine.terminals[second_state]) {
                 return false;
             }
         }

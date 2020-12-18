@@ -1,128 +1,129 @@
 #include"Reg_expr_to_state_machine.h"
 
-void add_number_to_all_edges(state_machine &g, int inc) {
-    for (int u = 0; u < g.n; u++) {
-        for (int i = 0; i < g.graph[u].size(); i++) {
-            g.graph[u][i].to += inc;
+void add_number_to_all_edges(state_machine &machine, int diff) {
+    for (int u = 0; u < machine.n; u++) {
+        for (int i = 0; i < machine.graph[u].size(); i++) {
+            machine.graph[u][i].to += diff;
         }
     }
 }
 
 state_machine state_machine_with_one_move(std::string move) {
-    state_machine ans;
-    ans.add_vertex(2);
-    ans.start = 0;
-    ans.terminals[1] = 1;
-    ans.add_edge(0, 1, move);
-    return ans;
+    state_machine ans_machine;
+    ans_machine.add_vertex(2);
+    ans_machine.start = 0;
+    ans_machine.terminals[1] = 1;
+    ans_machine.add_edge(0, 1, move);
+    return ans_machine;
 }
 
-state_machine add_kleene_closure(state_machine a) {
-    state_machine ans = a;
-    ans.add_vertex(2);
-    int new_start = ans.n - 2;
-    int new_terminal = ans.n - 1;
-    ans.add_edge(new_start, ans.start, "");
-    ans.add_edge(ans.start, new_terminal, "");
-    for (int u = 0; u < ans.n; u++) {
-        if (ans.terminals[u]) {
-            ans.add_edge(u, ans.start, "");
-            ans.terminals[u] = 0;
+state_machine add_kleene_closure(state_machine machine) {
+    machine.add_vertex(2);
+    int new_start = machine.n - 2;
+    int new_terminal = machine.n - 1;
+    machine.add_edge(new_start, machine.start, "");
+    machine.add_edge(machine.start, new_terminal, "");
+    for (int u = 0; u < machine.n; u++) {
+        if (machine.terminals[u]) {
+            machine.add_edge(u, machine.start, "");
+            machine.terminals[u] = 0;
         }
     }
 
-    ans.start = new_start;
-    ans.terminals[new_terminal] = 1;
+    machine.start = new_start;
+    machine.terminals[new_terminal] = 1;
     
-    return ans;
+    return machine;
 }
 
-state_machine concatenation(state_machine a, state_machine b) {
-    int n_last = a.n;
-    a.add_vertex(b.n);
-    add_number_to_all_edges(b, n_last);
+state_machine concatenation(state_machine first_machine, 
+                            state_machine second_machine) {
+    int n_last = first_machine.n;
+    first_machine.add_vertex(second_machine.n);
+    add_number_to_all_edges(second_machine, n_last);
     for (int u = 0; u < n_last; u++) {
-        if (a.terminals[u]) {
-            a.add_edge(u, b.start + n_last, "");
-            a.terminals[u] = 0;
+        if (first_machine.terminals[u]) {
+            first_machine.add_edge(u, second_machine.start + n_last, "");
+            first_machine.terminals[u] = 0;
         }
     }
-    for (int u = 0; u < b.n; u++) {
-        a.graph[n_last + u] = b.graph[u];
-        a.terminals[n_last + u] = b.terminals[u];
+    for (int u = 0; u < second_machine.n; u++) {
+        first_machine.graph[n_last + u] = second_machine.graph[u];
+        first_machine.terminals[n_last + u] = second_machine.terminals[u];
     }
-    return a;
+    return first_machine;
 }
 
-state_machine sum(state_machine a, state_machine b) {
+state_machine sum(state_machine first_machine, 
+                  state_machine second_machine) {
 
-    int n_last = a.n;
-    a.add_vertex(b.n + 2);
-    int new_start = a.n - 2;
-    int new_terminal = a.n - 1;
-    add_number_to_all_edges(b, n_last);
-    for (int u = 0; u < b.n; u++) {
-        a.graph[n_last + u] = b.graph[u];
-        a.terminals[n_last + u] = b.terminals[u];
+    int n_last = first_machine.n;
+    first_machine.add_vertex(second_machine.n + 2);
+    int new_start = first_machine.n - 2;
+    int new_terminal = first_machine.n - 1;
+    add_number_to_all_edges(second_machine, n_last);
+    for (int u = 0; u < second_machine.n; u++) {
+        first_machine.graph[n_last + u] = second_machine.graph[u];
+        first_machine.terminals[n_last + u] = second_machine.terminals[u];
     }
-    a.add_edge(new_start, a.start, "");
-    a.add_edge(new_start, b.start + n_last, "");
-    for (int u = 0; u < a.n; u++) {
-        if (a.terminals[u]) {
-            a.add_edge(u, new_terminal, "");
-            a.terminals[u] = 0;
+    first_machine.add_edge(new_start, first_machine.start, "");
+    first_machine.add_edge(new_start, second_machine.start + n_last, "");
+    for (int u = 0; u < first_machine.n; u++) {
+        if (first_machine.terminals[u]) {
+            first_machine.add_edge(u, new_terminal, "");
+            first_machine.terminals[u] = 0;
         }
     }
-    a.start = new_start;
-    a.terminals[new_terminal] = 1;
-    return a;
+    first_machine.start = new_start;
+    first_machine.terminals[new_terminal] = 1;
+    return first_machine;
 }
 
-state_machine expr(const std::string &s, int &i);
+state_machine process_summ(const std::string &reg_expr, int &i);
 
-state_machine term(const std::string &s, int &i) {
-    state_machine ans;
-    bool is_first = true;
-    while (i != s.size() && s[i] != '+' && s[i] != ')') {
+state_machine process_term(const std::string &reg_expr, int &i) {
+    state_machine ans_machine;
+    bool is_first_term = true;
+    while (i != reg_expr.size() && reg_expr[i] != '+' && reg_expr[i] != ')') {
         //std::cout << i << std::endl;
-        state_machine part;
-        if (s[i] == '(') {
+        state_machine last_term;
+        if (reg_expr[i] == '(') {
             i++;
-            part = expr(s, i);
+            last_term = process_summ(reg_expr, i);
             i++;
         } else {
             std::string move = "";
-            if (s[i] != '#') {
-                move += s[i];
+            if (reg_expr[i] != '#') {
+                move += reg_expr[i];
             }
-            part = state_machine_with_one_move(move);
+            last_term = state_machine_with_one_move(move);
             i++;
         }
-        if (i != s.size() && s[i] == '*') {
-            part = add_kleene_closure(part);
+        if (i != reg_expr.size() && reg_expr[i] == '*') {
+            last_term = add_kleene_closure(last_term);
             i++;
         }
-        if (is_first) {
-            ans = part;
-            is_first = false;
+        if (is_first_term) {
+            ans_machine = last_term;
+            is_first_term = false;
         } else {
-            ans = concatenation(ans, part);
+            ans_machine = concatenation(ans_machine, last_term);
         }
     }
-    return ans;
+    return ans_machine;
 }
 
-state_machine expr(const std::string &s, int &i) {
-    state_machine ans;
-    ans = term(s, i);
-    while (i != s.size() && s[i] == '+') {
+state_machine process_summ(const std::string &reg_expr, int &i) {
+    state_machine ans_machine;
+    ans_machine = process_term(reg_expr, i);
+    while (i != reg_expr.size() && reg_expr[i] == '+') {
         i++;
-        ans = sum(ans, term(s, i));
+        ans_machine = sum(ans_machine, process_term(reg_expr, i));
     }
-    return ans;
+    return ans_machine;
 }
 
-state_machine reg_expr_to_state_machine(const std::string &s) {
+state_machine reg_expr_to_state_machine(const std::string &reg_expr) {
     int i = 0;
-    return expr(s, i);
+    return process_summ(reg_expr, i);
 }

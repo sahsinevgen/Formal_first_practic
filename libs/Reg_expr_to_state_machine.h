@@ -3,20 +3,22 @@
 
 #include"State_machine.h"
 
-void add_number_to_all_edges(state_machine &g, int inc);
+void add_number_to_all_edges(state_machine &machine, int diff);
 
 state_machine state_machine_with_one_move(std::string move);
 
-state_machine add_kleene_closure(state_machine a);
+state_machine add_kleene_closure(state_machine machine);
 
-state_machine concatenation(state_machine a, state_machine b);
+state_machine concatenation(state_machine first_machine, 
+                            state_machine second_machine);
 
-state_machine sum(state_machine a, state_machine b);
+state_machine sum(state_machine first_machine, 
+                  state_machine second_machine);
 
-state_machine term(const std::string &s, int &i);
+state_machine process_term(const std::string &reg_expr, int &i);
 
-state_machine expr(const std::string &s, int &i);
+state_machine process_summ(const std::string &reg_expr, int &i);
 
-state_machine reg_expr_to_state_machine(const std::string &s);
+state_machine reg_expr_to_state_machine(const std::string &reg_expr);
 
 #endif //Reg_expr_to_state_machine

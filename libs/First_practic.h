@@ -11,6 +11,6 @@
 
 std::string true_reg_expr_from_input(std::string input);
 
-int get_ans(state_machine &machine, std::string s);
+int get_ans(state_machine &machine, std::string str);
 
 #endif //First_practic

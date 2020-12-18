@@ -6,6 +6,6 @@
 #include<map>
 #include<algorithm>
 
-state_machine determinization(const state_machine &g);
+state_machine determinization(const state_machine machine);
 
 #endif //Determinization

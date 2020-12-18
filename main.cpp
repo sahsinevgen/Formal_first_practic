@@ -11,10 +11,10 @@ int main() {
     machine.add_edge(n - 1, n, "abc");
     machine = minimization(determinization(make_one_letter_moves(machine)));
     
-    std::string s;
-    std::cin >> s;
+    std::string str;
+    std::cin >> str;
 
-    std::cout << get_ans(machine, s) << std::endl;
+    std::cout << get_ans(machine, str) << std::endl;
 
 
 }
