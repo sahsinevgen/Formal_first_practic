@@ -2,10 +2,12 @@
 
 std::string true_reg_expr_from_input(std::string input) {
     std::stack<std::string> reg_exprs;
-    for (int i = 0; i < input.size(); i++) {
-        if ('a' <= input[i] && input[i] <= 'c') {
-            reg_exprs.push(input.substr(i, 1));
-        } else if (input[i] == '*') {
+    for (const auto &symbol : input) {
+        if ('a' <= symbol && symbol <= 'c') {
+            std::string word = "";
+            word += symbol;
+            reg_exprs.push(word);
+        } else if (symbol == '*') {
             if (reg_exprs.size() < 1) {
                 throw std::invalid_argument(input);
             }
@@ -14,7 +16,7 @@ std::string true_reg_expr_from_input(std::string input) {
             reg_exprs.pop();
             arg = "(" + arg + ")*";
             reg_exprs.push(arg);
-        } else if (input[i] == '+' || input[i] == '.') {
+        } else if (symbol == '+' || symbol == '.') {
             if (reg_exprs.size() < 2) {
                 throw std::invalid_argument(input);
             }
@@ -23,7 +25,7 @@ std::string true_reg_expr_from_input(std::string input) {
             reg_exprs.pop();
             first_arg = reg_exprs.top();
             reg_exprs.pop();
-            if (input[i] == '.') {
+            if (symbol == '.') {
                 first_arg = "(" + first_arg + ")(" + second_arg + ")";
             } else {
                 first_arg = first_arg + "+" + second_arg;
@@ -40,44 +42,43 @@ std::string true_reg_expr_from_input(std::string input) {
 }
 
 int get_ans(state_machine &machine, std::string str) {
-    int n = machine.n;
-    std::vector<int> can_be_pref(n, 0);
-    std::vector<std::vector<int>> rev_graph(n);
-    for (int v = 0; v < n; v++) {
-        for (int i = 0; i < machine.graph[v].size(); i++) {
-            int u = machine.graph[v][i].to;
-            rev_graph[u].push_back(v);
+    int size = machine.size;
+    std::vector<int> can_be_pref(size, 0);
+    std::vector<std::vector<int>> rev_graph(size);
+    for (int vertex = 0; vertex < size; vertex++) {
+        for (const auto &edge : machine.graph[vertex]) {
+            int vertex_to = edge.to;
+            rev_graph[vertex].push_back(vertex_to);
         }
     }
     std::queue<int> not_processed_vertex;
-    for (int v = 0; v < n; v++) {
-        if (machine.terminals[v]) {
-            not_processed_vertex.push(v);
-            can_be_pref[v] = 1;
+    for (int vertex = 0; vertex < size; vertex++) {
+        if (machine.terminals[vertex]) {
+            not_processed_vertex.push(vertex);
+            can_be_pref[vertex] = 1;
         }
     }
     while (!not_processed_vertex.empty()) {
-        int v = not_processed_vertex.front();
+        int vertex = not_processed_vertex.front();
         not_processed_vertex.pop();
-        for (int i = 0; i < rev_graph[v].size(); i++) {
-            int u = rev_graph[v][i];
-            if (can_be_pref[u] == 0) {
-                can_be_pref[u] = 1;
-                not_processed_vertex.push(u);
+        for (auto next_vertex : rev_graph[vertex]) {
+            if (can_be_pref[next_vertex] == 0) {
+                can_be_pref[next_vertex] = 1;
+                not_processed_vertex.push(next_vertex);
             }
         }
     }
     int ans = 0;
     int cur_vertex = machine.start;
-    for (int i = 0; i < str.size(); i++) {
-        for (int j = 0; j < machine.graph[cur_vertex].size(); j++) {
-            if (machine.graph[cur_vertex][j].word == str.substr(i, 1)) {
-                cur_vertex = machine.graph[cur_vertex][str[i] - 'a'].to;
+    for (int symbol_id = 0; symbol_id < str.size(); symbol_id++) {
+        for (const auto &edge : machine.graph[cur_vertex]) {
+            if (edge.word == str.substr(symbol_id, 1)) {
+                cur_vertex = machine.graph[cur_vertex][str[symbol_id] - 'a'].to;
                 break;
             }
         }
         if (can_be_pref[cur_vertex]) {
-            ans = i + 1;
+            ans = symbol_id + 1;
         }
     }
     return ans;

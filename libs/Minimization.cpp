@@ -1,47 +1,49 @@
 #include"Minimization.h"
 
-bool cmp(edge first, edge second) {
+bool cmp(Edge first, Edge second) {
     return first.word < second.word;
 }
 
 state_machine minimization(state_machine machine) {
     std::vector<std::string> alphabet;
-    for (int u = 0; u < machine.n; u++) {
-        std::sort(machine.graph[u].begin(), machine.graph[u].end(), cmp);
+    for (auto &edges_list : machine.graph) {
+        std::sort(edges_list.begin(), edges_list.end(), cmp);
     }
-    for (int i = 0; i < machine.graph[0].size(); i++) {
-        alphabet.push_back(machine.graph[0][i].word);
+    for (const auto &edge : machine.graph[0]) {
+        alphabet.push_back(edge.word);
     }
 
-    std::vector<int> colours(machine.n);
+    std::vector<int> colours(machine.size);
     std::vector<std::vector<int> > moves_colours(
-                                    machine.n, 
+                                    machine.size, 
                                     std::vector<int>(alphabet.size()));
-    for (int u = 0; u < machine.n; u++) {
-        colours[u] = machine.terminals[u];
+    for (int vertex = 0; vertex < machine.size; vertex++) {
+        colours[vertex] = machine.terminals[vertex];
     }
     while (true) {
-        std::vector<int> new_colours(machine.n);
-        for (int u = 0; u < machine.n; u++) {
-            for (int i = 0; i < machine.graph[u].size(); i++) {
-                int v = machine.graph[u][i].to;
-                moves_colours[u][i] = colours[v];
+        std::vector<int> new_colours(machine.size);
+        for (int vertex = 0; vertex < machine.size; vertex++) {
+            for (int edge_id = 0; edge_id < machine.graph[vertex].size(); 
+                                  edge_id++) {
+                int vertex_to = machine.graph[vertex][edge_id].to;
+                moves_colours[vertex][edge_id] = colours[vertex_to];
             }
         }
         int cnt = 0;
-        for (int u = 0; u < machine.n; u++) {
+        for (int vertex = 0; vertex < machine.size; vertex++) {
             bool vertex_repeats = false;
-            for (int i = 0; i < u; i++) {
-                if (colours[u] == colours[i] && 
-                    moves_colours[u] == moves_colours[i]) {
+            for (int prev_vertex = 0; prev_vertex < vertex; 
+                                      prev_vertex++) {
+                if (colours[vertex] == colours[prev_vertex] && 
+                    moves_colours[vertex] == moves_colours[prev_vertex]) {
                     
-                    new_colours[u] = new_colours[i];
+                    new_colours[vertex] = new_colours[prev_vertex];
                     vertex_repeats = true;
                     break;
                 }
             }
             if (!vertex_repeats) {
-                new_colours[u] = cnt++;
+                new_colours[vertex] = cnt++;
             }
         }
         if (new_colours == colours) {
@@ -50,24 +52,24 @@ state_machine minimization(state_machine machine) {
             colours = new_colours;
         }
     }
-    std::vector<int> first_colour_entry(machine.n, -1);
-    for (int u = 0; u < machine.n; u++) {
-        if (first_colour_entry[colours[u]] == -1) {
-            first_colour_entry[colours[u]] = u;
+    std::vector<int> first_colour_entry(machine.size, -1);
+    for (int vertex = 0; vertex < machine.size; vertex++) {
+        if (first_colour_entry[colours[vertex]] == -1) {
+            first_colour_entry[colours[vertex]] = vertex;
         }
     }
     state_machine ans_machine = state_machine();
     ans_machine.start = first_colour_entry[colours[machine.start]];
-    for (int u = 0; u < machine.n; u++) {
-        if (first_colour_entry[colours[u]] != u) {
+    for (int vertex = 0; vertex < machine.size; vertex++) {
+        if (first_colour_entry[colours[vertex]] != vertex) {
             continue;
         }
         ans_machine.add_vertex();
-        ans_machine.terminals[colours[u]] = machine.terminals[u];
-        for (int i = 0; i < alphabet.size(); i++) {
-            ans_machine.add_edge(colours[u], 
-                                 colours[machine.graph[u][i].to], 
-                                         machine.graph[u][i].word);
+        ans_machine.terminals[colours[vertex]] = machine.terminals[vertex];
+        for (int edge_id = 0; edge_id < alphabet.size(); edge_id++) {
+            ans_machine.add_edge(colours[vertex], 
+                                 colours[machine.graph[vertex][edge_id].to], 
+                                         machine.graph[vertex][edge_id].word);
         }
     }
     return ans_machine;

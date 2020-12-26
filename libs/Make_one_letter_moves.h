@@ -8,7 +8,7 @@ void dfs(const state_machine &machine,
          std::vector<int> &used,
          int used_colour,
          int root, 
-         int u,
+         int vertex,
          state_machine &new_machine);
 
 state_machine make_one_letter_moves(const state_machine &machine); // + removing multiple edges

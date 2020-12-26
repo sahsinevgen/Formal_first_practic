@@ -148,9 +148,9 @@ TEST(First_practic_test, solve_test1) {
     std::string input = "a+b";
     state_machine machine;
     machine = reg_expr_to_state_machine(input);
-    int n = machine.n;
+    int size = machine.size;
     machine.add_vertex();
-    machine.add_edge(n - 1, n, "abc");
+    machine.add_edge(size - 1, size, "abc");
     machine = minimization(determinization(make_one_letter_moves(machine)));
     EXPECT_EQ(get_ans(machine, "abc"), 1);
     EXPECT_EQ(get_ans(machine, "abc"), 1);

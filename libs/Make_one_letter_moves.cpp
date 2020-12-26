@@ -4,28 +4,28 @@ void dfs_on_eps_edges(const state_machine &machine,
                       std::vector<int> &used,
                       int used_colour,
                       int root, 
-                      int u,
+                      int vertex,
                       state_machine &new_machine) {
 
-    if (machine.terminals[u]) {
+    if (machine.terminals[vertex]) {
         new_machine.terminals[root] = 1;
     }
-    for (int i = 0; i < machine.graph[u].size(); i++) {
-        int v = machine.graph[u][i].to;
-        std::string word = machine.graph[u][i].word;
+    for (auto &edge : machine.graph[vertex]) {
+        int next_vertex = edge.to;
+        std::string word = edge.word;
         if (word == "") {
-            if (used[v] != used_colour) {
-                used[v] = used_colour;
+            if (used[next_vertex] != used_colour) {
+                used[next_vertex] = used_colour;
                 dfs_on_eps_edges(machine, 
                                  used, 
                                  used_colour, 
                                  root, 
-                                 v, 
+                                 next_vertex, 
                                  new_machine);
             }
         } else {
-            if (u != root) {
-                new_machine.add_edge(root, v, word);
+            if (next_vertex != root) {
+                new_machine.add_edge(root, vertex, word);
             }
         }
     }
@@ -33,41 +33,42 @@ void dfs_on_eps_edges(const state_machine &machine,
 
 state_machine make_one_letter_moves(const state_machine &machine) {
     state_machine ans_machine = machine;
-    std::vector<int> used(machine.n, -1);
-    for (int u = 0; u < machine.n; u++) {
-        used[u] = u;
-        dfs_on_eps_edges(machine, used, u, u, u, ans_machine);
+    std::vector<int> used(machine.size, -1);
+    for (int vertex = 0; vertex < machine.size; vertex++) {
+        used[vertex] = vertex;
+        dfs_on_eps_edges(machine, used, vertex, vertex, vertex, ans_machine);
     }
-    for (int u = 0; u < ans_machine.n; u++) {
-        for (int i = 0; i < ans_machine.graph[u].size(); ) {
-            if (ans_machine.graph[u][i].word == "") {
-                ans_machine.graph[u].erase(ans_machine.graph[u].begin() + i);
+    for (int vertex = 0; vertex < ans_machine.size; vertex++) {
+        for (int edge_id = 0; edge_id < ans_machine.graph[vertex].size(); 
+                              edge_id++) {
+            if (ans_machine.graph[vertex][edge_id].word == "") {
+                ans_machine.graph[vertex].erase(ans_machine.graph[vertex].begin() + edge_id);
             } else {
-                i++;
+                edge_id++;
             }
         }
     }
-    for (int u = 0; u < ans_machine.n; u++) {
-        std::sort(ans_machine.graph[u].begin(), ans_machine.graph[u].end());
-        ans_machine.graph[u].erase(std::unique(ans_machine.graph[u].begin(), 
-                                               ans_machine.graph[u].end()), 
-                                   ans_machine.graph[u].end());
+    for (auto &edges_list : ans_machine.graph) {
+        std::sort(edges_list.begin(), edges_list.end());
+        edges_list.erase(std::unique(edges_list.begin(), edges_list.end()), 
+                         edges_list.end());
     }
     int cnt = 0;
-    for (int u = 0; u < ans_machine.n; u++) {
-        for (int i = 0; i < ans_machine.graph[u].size(); i++) {
-            int v = ans_machine.graph[u][i].to;
-            std::string word = ans_machine.graph[u][i].word;
+    for (int vertex = 0; vertex < ans_machine.size; vertex++) {
+        for (auto &edge : ans_machine.graph[vertex]) {
+            int vertex_to = edge.to;
+            std::string word = edge.word;
             if (word.length() > 1) {
-                ans_machine.graph[u][i] = edge(ans_machine.n, word[0]);
+                edge = Edge(ans_machine.size, word[0]);
                 ans_machine.add_vertex();
-                for (int j = 1; j < word.size() - 1; j++) {
-                    ans_machine.add_edge(ans_machine.n - 1, 
-                                         ans_machine.n, 
-                                         word[j]);
+                for (int symbol_id = 1; symbol_id < word.size() - 1; 
+                                        symbol_id++) {
+                    ans_machine.add_edge(ans_machine.size - 1, 
+                                         ans_machine.size, 
+                                         word[symbol_id]);
                     ans_machine.add_vertex();
                 }
-                ans_machine.add_edge(ans_machine.n - 1, v, word.back());
+                ans_machine.add_edge(ans_machine.size - 1, vertex_to, word.back());
             }
         }
     }

@@ -15,9 +15,9 @@ state_machine concatenation(state_machine first_machine,
 state_machine sum(state_machine first_machine, 
                   state_machine second_machine);
 
-state_machine process_term(const std::string &reg_expr, int &i);
+state_machine process_term(const std::string &reg_expr, int &symbol_id);
 
-state_machine process_summ(const std::string &reg_expr, int &i);
+state_machine process_summ(const std::string &reg_expr, int &symbol_id);
 
 state_machine reg_expr_to_state_machine(const std::string &reg_expr);
 

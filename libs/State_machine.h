@@ -6,25 +6,25 @@
 #include<string>
 #include<iostream>
 
-class edge {
+class Edge {
 public:
     int to;
     std::string word;
     
-    edge(int to_ = -1, std::string word_ = "");
+    Edge(int to_ = -1, std::string word_ = "");
     
-    edge(int to_, char letter);
+    Edge(int to_, char letter);
 
-    bool operator < (edge other);
+    bool operator < (Edge other);
 
-    bool operator == (edge other);
+    bool operator == (Edge other);
 };
 
 class state_machine {
 public:
-    std::vector<std::vector<edge> > graph;
+    std::vector<std::vector<Edge> > graph;
     std::vector<int> terminals;
-    int n;
+    int size;
     int start;
 
     state_machine();
@@ -37,7 +37,7 @@ public:
 
     void add_edge(int from, int to, char letter);
 
-    void add_edge(int from, edge x);
+    void add_edge(int from, Edge x);
 
     void add_vertex(int cnt = 1);
 
